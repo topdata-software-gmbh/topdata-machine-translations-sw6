@@ -1,0 +1,21 @@
+{
+    "name": "topdata/machine-translations",
+    "description": "A Shopware 6 plugin for machine translation",
+    "type": "shopware-platform-plugin",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Topdata\\MachineTranslations\\": "src/"
+        }
+    },
+    "extra": {
+        "shopware-plugin-class": "Topdata\\MachineTranslations\\TopdataMachineTranslations",
+        "label": {
+            "en-GB": "Machine Translations",
+            "de-DE": "Maschinelle Übersetzungen"
+        }
+    },
+    "require": {
+        "deeplcom/deepl-php": "^1.3"
+    }
+}
