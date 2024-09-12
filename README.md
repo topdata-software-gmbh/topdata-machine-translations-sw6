@@ -19,13 +19,13 @@ This plugin provides machine translation capabilities for Shopware 6, allowing a
 
 1. Clone this repository into the `custom/plugins` directory of your Shopware 6 installation:
    ```
-   git clone https://github.com/your-repo/TopdataMachineTranslations.git custom/plugins/TopdataMachineTranslations
+   git clone https://github.com/your-repo/TopdataMachineTranslationsSW6.git custom/plugins/TopdataMachineTranslationsSW6
    ```
 
 2. Install the plugin via the Shopware CLI:
    ```
    bin/console plugin:refresh
-   bin/console plugin:install --activate TopdataMachineTranslations
+   bin/console plugin:install --activate TopdataMachineTranslationsSW6
    ```
 
 3. Install the required dependencies:

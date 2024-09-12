@@ -3,19 +3,42 @@
     "description": "A Shopware 6 plugin for machine translation",
     "type": "shopware-platform-plugin",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "TopData Software GmbH",
+            "homepage": "https://www.topdata.de",
+            "role": "Manufacturer"
+        }
+    ],
+
     "autoload": {
         "psr-4": {
-            "Topdata\\MachineTranslations\\": "src/"
+            "Topdata\\TopdataMachineTranslationsSW6\\": "src/"
         }
     },
     "extra": {
-        "shopware-plugin-class": "Topdata\\MachineTranslations\\TopdataMachineTranslations",
+        "shopware-plugin-class": "Topdata\\TopdataMachineTranslationsSW6\\TopdataMachineTranslationsSW6",
+        "plugin-icon":           "src/Resources/config/plugin.png",
+        "copyright":             "(c) by TopData Software GmbH",
+        "manufacturerLink":      {
+            "de-DE": "https://www.topdata.de",
+            "en-GB": "https://www.topdata.de"
+        },
+        "supportLink":           {
+            "de-DE": "https://www.topdata.de",
+            "en-GB": "https://www.topdata.de"
+        },
         "label": {
-            "en-GB": "Machine Translations",
-            "de-DE": "Maschinelle Übersetzungen"
+            "en-GB": "Topdata Machine Translations",
+            "de-DE": "Topdata Maschinelle Übersetzungen"
+        },
+        "description": {
+            "en-GB": "A Shopware 6 plugin for machine translation",
+            "de-DE": "Ein Shopware 6 Plugin für maschinelle Übersetzungen"
         }
     },
     "require": {
+        "shopware/core": "6.4.* || 6.5.* || 6.6.*",
         "deeplcom/deepl-php": "^1.3"
     }
 }
