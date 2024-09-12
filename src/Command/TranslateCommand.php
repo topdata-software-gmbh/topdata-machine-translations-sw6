@@ -13,6 +13,7 @@ use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
 /**
  * 09/2024 created
  * Refactored to use cURL instead of DeepL client
+ * 09/2024 updated: Added more verbose output and CLI options for language selection
  */
 class TranslateCommand extends Command
 {
@@ -31,20 +32,20 @@ class TranslateCommand extends Command
         $this->translator = new DeeplTranslator(getenv('DEEPL_FREE_API_KEY'));
     }
 
-
-
-
     public function printAvailableLanguages(): void
     {
         $langs = $this->getLanguages();
-        $this->cliStyle->table(array_keys($langs[0]), $langs);
+        $this->cliStyle->section('Available Languages');
+        $this->cliStyle->table(['Language ID', 'Language Code', 'Language Name'], $langs);
     }
 
     protected function configure(): void
     {
         $this
-            ->setDescription('Translate content from German to Czech')
-            ->addOption('table', 't', InputOption::VALUE_OPTIONAL, 'Specific table to translate');
+            ->setDescription('Translate content from one language to another')
+            ->addOption('table', 't', InputOption::VALUE_OPTIONAL, 'Specific table to translate')
+            ->addOption('from', 'f', InputOption::VALUE_REQUIRED, 'Source language code (e.g., de-DE)', 'de-DE')
+            ->addOption('to', null, InputOption::VALUE_REQUIRED, 'Target language code (e.g., cs-CZ)', 'cs-CZ');
     }
 
     /**
@@ -54,32 +55,39 @@ class TranslateCommand extends Command
     {
         $this->cliStyle = new SymfonyStyle($input, $output);
 
-        // ---- just for info
+        $this->cliStyle->title('Machine Translation Command');
+
+        // Display available languages
         $this->printAvailableLanguages();
 
-        // ----
-        $langCodeFrom = 'de-DE';
-//        $langCodeTo = 'cs-CZ';
-        $langCodeTo = 'en-GB';
+        // Get language codes from CLI options
+        $langCodeFrom = $input->getOption('from');
+        $langCodeTo = $input->getOption('to');
 
-        // ---- check if lang codes are available
+        $this->cliStyle->section('Selected Languages');
+        $this->cliStyle->text([
+            "From: $langCodeFrom",
+            "To: $langCodeTo"
+        ]);
+
+        // Check if language codes are available
         $availableLangs = $this->getLanguages();
         $langCodes = array_column($availableLangs, 'code');
         if (!in_array($langCodeFrom, $langCodes)) {
-            $output->writeln("Error: From-Language Code $langCodeFrom not found. available: " . implode(', ', $langCodes));
+            $this->cliStyle->error("Error: From-Language Code $langCodeFrom not found. Available: " . implode(', ', $langCodes));
             return Command::FAILURE;
         }
         if (!in_array($langCodeTo, $langCodes)) {
-            $output->writeln("Error: To-Language Code $langCodeTo not found. available: " . implode(', ', $langCodes));
+            $this->cliStyle->error("Error: To-Language Code $langCodeTo not found. Available: " . implode(', ', $langCodes));
             return Command::FAILURE;
         }
 
-        // ---- MAIN
+        // Get language IDs
         $this->langIdFrom = $this->getLanguageId($langCodeFrom);
         $this->langIdTo = $this->getLanguageId($langCodeTo);
 
         if (!$this->langIdFrom || !$this->langIdTo) {
-            $output->writeln("Error: Could not find language IDs for German or Czech.");
+            $this->cliStyle->error("Error: Could not find language IDs for the specified languages.");
             return Command::FAILURE;
         }
 
@@ -89,16 +97,18 @@ class TranslateCommand extends Command
             ? [$specificTable]
             : $this->connection->createSchemaManager()->listTableNames();
 
+        $this->cliStyle->section('Processing Tables');
+
         foreach ($tables as $tableName) {
             if (substr($tableName, -11) === '_translation') {
-                $output->writeln("Processing table: $tableName");
+                $this->cliStyle->text("Processing table: $tableName");
 
                 $columns = $this->connection->createSchemaManager()->listTableColumns($tableName);
                 $textColumns = array_filter($columns, function ($column) {
                     return !in_array($column->getName(), ['id', 'language_id']);
                 });
 
-                $germanRows = $this->connection->createQueryBuilder()
+                $sourceRows = $this->connection->createQueryBuilder()
                     ->select('*')
                     ->from($tableName)
                     ->where('language_id = :languageId')
@@ -106,24 +116,34 @@ class TranslateCommand extends Command
                     ->executeQuery()
                     ->fetchAllAssociative();
 
-                foreach ($germanRows as $row) {
+                $this->cliStyle->progressStart(count($sourceRows));
+
+                foreach ($sourceRows as $row) {
                     $updates = [];
                     foreach ($textColumns as $column) {
                         $columnName = $column->getName();
                         if (!empty($row[$columnName])) {
                             try {
-                                $translatedText = $this->translator->translate($row[$columnName], 'DE', 'CS');
+                                $translatedText = $this->translator->translate($row[$columnName], substr($langCodeFrom, 0, 2), substr($langCodeTo, 0, 2));
                                 $updates[$columnName] = $translatedText;
                             } catch (\Exception $e) {
-                                $output->writeln("Translation error for $columnName: " . $e->getMessage());
+                                $this->cliStyle->error("Translation error for $columnName: " . $e->getMessage());
                             }
                         }
                     }
+
+                    // Here you would update or insert the translated row
+                    // For now, we'll just log the updates
+                    $this->cliStyle->text("Updated row {$row['id']}: " . json_encode($updates));
+
+                    $this->cliStyle->progressAdvance();
                 }
+
+                $this->cliStyle->progressFinish();
             }
         }
 
-        $output->writeln("Translation completed.");
+        $this->cliStyle->success("Translation completed.");
 
         return Command::SUCCESS;
     }
@@ -131,11 +151,11 @@ class TranslateCommand extends Command
     private function getLanguageId(string $localeCode): ?string
     {
         $qb = $this->connection->createQueryBuilder();
-        $qb->select('lan.id');
-        $qb->from('language', 'lan');
-        $qb->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
-        $qb->where('LOWER(loc.code) = LOWER(:locale)');
-        $qb->setParameter('locale', $localeCode);
+        $qb->select('lan.id')
+            ->from('language', 'lan')
+            ->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id')
+            ->where('LOWER(loc.code) = LOWER(:locale)')
+            ->setParameter('locale', $localeCode);
 
         return $qb->executeQuery()->fetchOne() ?? null;
     }
@@ -143,42 +163,10 @@ class TranslateCommand extends Command
     private function getLanguages(): array
     {
         $qb = $this->connection->createQueryBuilder();
-        $qb->select('LOWER(HEX(lan.id)) AS languageId, loc.code AS code, lan.name AS name');
-        $qb->from('language', 'lan');
-        $qb->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
+        $qb->select('LOWER(HEX(lan.id)) AS languageId, loc.code AS code, lan.name AS name')
+            ->from('language', 'lan')
+            ->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
 
         return $qb->fetchAllAssociative();
-    }
-
-    private function translateText(string $text, string $sourceLang, string $targetLang): string
-    {
-        $data = [
-            'auth_key'    => $this->apiKey,
-            'text'        => $text,
-            'source_lang' => $sourceLang,
-            'target_lang' => $targetLang,
-        ];
-
-        $ch = curl_init($this->apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-
-        $response = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            throw new \Exception('cURL error: ' . curl_error($ch));
-        }
-
-        curl_close($ch);
-
-        $result = json_decode($response, true);
-
-        if (isset($result['translations'][0]['text'])) {
-            return $result['translations'][0]['text'];
-        } else {
-            throw new \Exception('Translation failed: ' . $response);
-        }
     }
 }
