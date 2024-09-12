@@ -8,6 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
 
 /**
  * 09/2024 created
@@ -20,16 +21,18 @@ class TranslateCommand extends Command
     private Connection $connection;
     private string $langIdFrom;
     private string $langIdTo;
-    private string $apiKey;
-    private string $apiUrl = 'https://api-free.deepl.com/v2/translate';
+    private DeeplTranslator $translator;
     private SymfonyStyle $cliStyle;
 
     public function __construct(Connection $connection)
     {
         parent::__construct(self::$defaultName);
         $this->connection = $connection;
-        $this->apiKey = getenv('DEEPL_FREE_API_KEY');
+        $this->translator = new DeeplTranslator(getenv('DEEPL_FREE_API_KEY'));
     }
+
+
+
 
     public function printAvailableLanguages(): void
     {
@@ -109,23 +112,12 @@ class TranslateCommand extends Command
                         $columnName = $column->getName();
                         if (!empty($row[$columnName])) {
                             try {
-                                $translatedText = $this->translateText($row[$columnName], 'DE', 'CS');
+                                $translatedText = $this->translator->translate($row[$columnName], 'DE', 'CS');
                                 $updates[$columnName] = $translatedText;
                             } catch (\Exception $e) {
                                 $output->writeln("Translation error for $columnName: " . $e->getMessage());
                             }
                         }
-                    }
-
-                    if (!empty($updates)) {
-                        $this->connection->createQueryBuilder()
-                            ->update($tableName)
-                            ->where('id = :id')
-                            ->andWhere('language_id = :languageId')
-                            ->setParameter('id', $row['id'])
-                            ->setParameter('languageId', $this->langIdTo)
-                            ->setParameters($updates)
-                            ->executeStatement();
                     }
                 }
             }
