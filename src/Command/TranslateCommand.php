@@ -170,6 +170,8 @@ class TranslateCommand extends Command
     }
 
     /**
+     * it returns tables that have a _translation suffix
+     *
      * 09/2024 created
      *
      * @return string[]
