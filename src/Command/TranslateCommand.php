@@ -93,54 +93,53 @@ class TranslateCommand extends Command
 
         $specificTable = $input->getOption('table');
 
-        $tables = $specificTable
-            ? [$specificTable]
-            : $this->connection->createSchemaManager()->listTableNames();
+        $tables = $specificTable ? [$specificTable] : $this->_getTranslatableTables();
+
+        $this->cliStyle->listing($tables, 'Tables to process');
+
 
         $this->cliStyle->section('Processing Tables');
 
         foreach ($tables as $tableName) {
-            if (substr($tableName, -11) === '_translation') {
-                $this->cliStyle->text("Processing table: $tableName");
+            $this->cliStyle->text("Processing table: $tableName");
 
-                $columns = $this->connection->createSchemaManager()->listTableColumns($tableName);
-                $textColumns = array_filter($columns, function ($column) {
-                    return !in_array($column->getName(), ['id', 'language_id']);
-                });
+            $columns = $this->connection->createSchemaManager()->listTableColumns($tableName);
+            $textColumns = array_filter($columns, function ($column) {
+                return !in_array($column->getName(), ['id', 'language_id']);
+            });
 
-                $sourceRows = $this->connection->createQueryBuilder()
-                    ->select('*')
-                    ->from($tableName)
-                    ->where('language_id = :languageId')
-                    ->setParameter('languageId', $this->langIdFrom)
-                    ->executeQuery()
-                    ->fetchAllAssociative();
+            $sourceRows = $this->connection->createQueryBuilder()
+                ->select('*')
+                ->from($tableName)
+                ->where('language_id = :languageId')
+                ->setParameter('languageId', $this->langIdFrom)
+                ->executeQuery()
+                ->fetchAllAssociative();
 
-                $this->cliStyle->progressStart(count($sourceRows));
+            $this->cliStyle->progressStart(count($sourceRows));
 
-                foreach ($sourceRows as $row) {
-                    $updates = [];
-                    foreach ($textColumns as $column) {
-                        $columnName = $column->getName();
-                        if (!empty($row[$columnName])) {
-                            try {
-                                $translatedText = $this->translator->translate($row[$columnName], substr($langCodeFrom, 0, 2), substr($langCodeTo, 0, 2));
-                                $updates[$columnName] = $translatedText;
-                            } catch (\Exception $e) {
-                                $this->cliStyle->error("Translation error for $columnName: " . $e->getMessage());
-                            }
+            foreach ($sourceRows as $row) {
+                $updates = [];
+                foreach ($textColumns as $column) {
+                    $columnName = $column->getName();
+                    if (!empty($row[$columnName])) {
+                        try {
+                            $translatedText = $this->translator->translate($row[$columnName], substr($langCodeFrom, 0, 2), substr($langCodeTo, 0, 2));
+                            $updates[$columnName] = $translatedText;
+                        } catch (\Exception $e) {
+                            $this->cliStyle->error("Translation error for $columnName: " . $e->getMessage());
                         }
                     }
-
-                    // Here you would update or insert the translated row
-                    // For now, we'll just log the updates
-                    $this->cliStyle->text("Updated row {$row['id']}: " . json_encode($updates));
-
-                    $this->cliStyle->progressAdvance();
                 }
 
-                $this->cliStyle->progressFinish();
+                // Here you would update or insert the translated row
+                // For now, we'll just log the updates
+                $this->cliStyle->text("Updated row {$row['id']}: " . json_encode($updates));
+
+                $this->cliStyle->progressAdvance();
             }
+
+            $this->cliStyle->progressFinish();
         }
 
         $this->cliStyle->success("Translation completed.");
@@ -168,5 +167,20 @@ class TranslateCommand extends Command
             ->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
 
         return $qb->fetchAllAssociative();
+    }
+
+    /**
+     * 09/2024 created
+     *
+     * @return string[]
+     */
+    private function _getTranslatableTables(): array
+    {
+        $tables = $this->connection->createSchemaManager()->listTableNames();
+        $filtered = array_filter($tables, function ($tableName) {
+            return substr($tableName, -12) === '_translation';
+        });
+
+        return $filtered;
     }
 }
