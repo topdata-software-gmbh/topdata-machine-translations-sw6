@@ -40,11 +40,17 @@ This plugin provides machine translation capabilities for Shopware 6, allowing a
 
 ## Configuration
 
-1. Set your DeepL API key as an environment variable:
+- Set your DeepL API key as an environment variable:
    ```
    export DEEPL_FREE_API_KEY=your-api-key-here
    ```
    For production use, consider adding this to your server's environment configuration.
+
+- Alternatively, you can prepend console commands with the environment variable:
+   ```
+   DEEPL_FREE_API_KEY=your-api-key-here bin/console topdata:translate
+   ```
+
 
 ## Usage
 
@@ -53,9 +59,9 @@ To translate all relevant tables:
 bin/console topdata:translate
 ```
 
-To translate a specific table:
+To translate one or more specific table:
 ```
-bin/console topdata:translate --table=your_table_name
+bin/console topdata:translate --table=your_table_name_a --table=your_table_name_b
 ```
 
 ## Support
