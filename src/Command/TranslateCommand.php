@@ -103,7 +103,7 @@ class TranslateCommand extends Command
         foreach ($tables as $tableName) {
             $this->cliStyle->text("Processing table: $tableName");
 
-            $columns = $this->connection->createSchemaManager()->listTableColumns($tableName);
+            $columns = $this->connection->getSchemaManager()->listTableColumns($tableName);
             $textColumns = array_filter($columns, function ($column) {
                 return !in_array($column->getName(), ['id', 'language_id']);
             });
@@ -113,7 +113,7 @@ class TranslateCommand extends Command
                 ->from($tableName)
                 ->where('language_id = :languageId')
                 ->setParameter('languageId', $this->langIdFrom)
-                ->executeQuery()
+                ->execute()
                 ->fetchAllAssociative();
 
             $this->cliStyle->progressStart(count($sourceRows));
@@ -156,7 +156,7 @@ class TranslateCommand extends Command
             ->where('LOWER(loc.code) = LOWER(:locale)')
             ->setParameter('locale', $localeCode);
 
-        return $qb->executeQuery()->fetchOne() ?? null;
+        return $qb->execute()->fetchOne() ?? null;
     }
 
     private function getLanguages(): array
@@ -166,7 +166,7 @@ class TranslateCommand extends Command
             ->from('language', 'lan')
             ->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
 
-        return $qb->fetchAllAssociative();
+        return $qb->execute()->fetchAllAssociative();
     }
 
     /**
@@ -178,7 +178,7 @@ class TranslateCommand extends Command
      */
     private function _getTranslatableTables(): array
     {
-        $tables = $this->connection->createSchemaManager()->listTableNames();
+        $tables = $this->connection->getSchemaManager()->listTableNames();
         $filtered = array_filter($tables, function ($tableName) {
             return substr($tableName, -12) === '_translation';
         });
