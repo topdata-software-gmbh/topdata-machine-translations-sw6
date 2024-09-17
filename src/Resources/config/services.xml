@@ -4,8 +4,12 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+
+
+        <!-- CONSOLE COMMANDS -->
         <service id="Topdata\TopdataMachineTranslationsSW6\Command\TranslateCommand" autowire="true">
             <tag name="console.command"/>
         </service>
+
     </services>
 </container>
