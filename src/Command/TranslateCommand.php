@@ -52,7 +52,7 @@ class TranslateCommand extends Command
         $sourceLang = substr($langCodeFrom, 0, 2);
         $targetLang = substr($langCodeTo, 0, 2);
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->section('Selected Languages');
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Selected Languages');
         \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->text([
             "DB:   $databaseUrl",
             "From: $langCodeFrom",
@@ -83,7 +83,7 @@ class TranslateCommand extends Command
             return Command::FAILURE;
         }
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->section('Processing Tables');
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Processing Tables');
         $tableBackuper = new TableBackuper($databaseUrl, \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle());
         $tableTranslator = new TableTranslator($this->connection, $this->deeplTranslator, \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle());
 
@@ -104,7 +104,7 @@ class TranslateCommand extends Command
     private function printAvailableLanguages(): void
     {
         $langs = $this->getLanguages();
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->section('Available Languages');
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Available Languages');
         \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->table(['Language ID', 'Language Code', 'Language Name'], $langs);
     }
 
