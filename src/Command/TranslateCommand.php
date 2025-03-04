@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Topdata\TopdataFoundationSW6\Util\CliLogger;
 use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
 use Topdata\TopdataMachineTranslationsSW6\Helper\TableBackuper;
 use Topdata\TopdataMachineTranslationsSW6\Helper\TableTranslator;
@@ -38,12 +39,11 @@ class TranslateCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // ---- init
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle() = new SymfonyStyle($input, $output);
         assert(getenv('DEEPL_FREE_API_KEY'), 'DEEPL_FREE_API_KEY is missing');
         $this->deeplTranslator = new DeeplTranslator(getenv('DEEPL_FREE_API_KEY'));
         $databaseUrl = $this->connection->getParams()['url'];
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::title('Machine Translation Command');
+        CliLogger::title('Machine Translation Command');
 
         $this->printAvailableLanguages();
 
@@ -52,18 +52,18 @@ class TranslateCommand extends Command
         $sourceLang = substr($langCodeFrom, 0, 2);
         $targetLang = substr($langCodeTo, 0, 2);
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Selected Languages');
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->text([
-            "DB:   $databaseUrl",
-            "From: $langCodeFrom",
-            "To:   $langCodeTo"
-        ]);
+        CliLogger::section('Selected Languages');
+        CliLogger::writeln("
+DB:   $databaseUrl
+From: $langCodeFrom
+To:   $langCodeTo
+        ");
 
         // ----
         $availableLangs = $this->getLanguages();
         $langCodes = array_column($availableLangs, 'code');
         if (!in_array($langCodeFrom, $langCodes) || !in_array($langCodeTo, $langCodes)) {
-            \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->error("Error: Invalid language codes. Available: " . implode(', ', $langCodes));
+            CliLogger::getCliStyle()->error("Error: Invalid language codes. Available: " . implode(', ', $langCodes));
             return Command::FAILURE;
         }
 
@@ -71,7 +71,7 @@ class TranslateCommand extends Command
         $langIdTo = $this->getLanguageId($langCodeTo);
 
         if (!$langIdFrom || !$langIdTo) {
-            \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->error("Error: Could not find language IDs for the specified languages.");
+            CliLogger::getCliStyle()->error("Error: Could not find language IDs for the specified languages.");
             return Command::FAILURE;
         }
 
@@ -79,24 +79,24 @@ class TranslateCommand extends Command
         $tables = $this->getTablesForProcessing($specificTables);
 
         if (empty($tables)) {
-            \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->error("No tables to process.");
+            CliLogger::getCliStyle()->error("No tables to process.");
             return Command::FAILURE;
         }
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Processing Tables');
-        $tableBackuper = new TableBackuper($databaseUrl, \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle());
-        $tableTranslator = new TableTranslator($this->connection, $this->deeplTranslator, \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle());
+        CliLogger::section('Processing Tables');
+        $tableBackuper = new TableBackuper($databaseUrl, CliLogger::getCliStyle());
+        $tableTranslator = new TableTranslator($this->connection, $this->deeplTranslator, CliLogger::getCliStyle());
 
         foreach ($tables as $tableName) {
             if($input->getOption('no-backup')) {
-               \Topdata\TopdataFoundationSW6\Util\CliLogger::info("Skipping backup for table: $tableName");
+               CliLogger::info("Skipping backup for table: $tableName");
             } else {
                 $tableBackuper->backupTable($tableName);
             }
             $tableTranslator->translateTable($tableName, $langIdFrom, $langIdTo, $sourceLang, $targetLang);
         }
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::success("Translation completed.");
+        CliLogger::success("Translation completed.");
 
         return Command::SUCCESS;
     }
@@ -104,8 +104,8 @@ class TranslateCommand extends Command
     private function printAvailableLanguages(): void
     {
         $langs = $this->getLanguages();
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::section('Available Languages');
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->table(['Language ID', 'Language Code', 'Language Name'], $langs);
+        CliLogger::section('Available Languages');
+        CliLogger::getCliStyle()->table(['Language ID', 'Language Code', 'Language Name'], $langs);
     }
 
     private function getLanguageId(string $localeCode): ?string
@@ -133,21 +133,21 @@ class TranslateCommand extends Command
     private function getTablesForProcessing(array $specificTables): array
     {
         if (!empty($specificTables)) {
-            \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->text("Specific table: " . implode(", ", $specificTables));
+            CliLogger::writeln("Specific table: " . implode(", ", $specificTables));
             $translatableTables = $this->getTranslatableTables();
             $tables = array_intersect($specificTables, $translatableTables);
             if (count($tables) !== count($specificTables)) {
-                \Topdata\TopdataFoundationSW6\Util\CliLogger::warning("Some specified tables are not translatable and will be skipped.");
+                CliLogger::warning("Some specified tables are not translatable and will be skipped.");
             }
         } else {
             $tables = $this->getTranslatableTables();
-            \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->table(['table name'], array_map(fn($x) => [$x], $tables));
-            if (!\Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->confirm("Do you want to process ALL tables?")) {
+            CliLogger::getCliStyle()->table(['table name'], array_map(fn($x) => [$x], $tables));
+            if (!CliLogger::getCliStyle()->confirm("Do you want to process ALL tables?")) {
                 return [];
             }
         }
 
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->listing($tables, 'Tables to process');
+        CliLogger::getCliStyle()->listing($tables, 'Tables to process');
         return $tables;
     }
 
