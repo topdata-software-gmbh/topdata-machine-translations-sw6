@@ -20,12 +20,12 @@ class TableTranslator
     {
         $this->connection = $connection;
         $this->deeplTranslator = $deeplTranslator;
-        $this->cliStyle = $cliStyle;
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle() = $cliStyle;
     }
 
     public function translateTable(string $tableName, string $langIdFrom, string $langIdTo, string $sourceLang, string $targetLang): void
     {
-        $this->cliStyle->info("Processing table: $tableName");
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::info("Processing table: $tableName");
 
         $textColumns = $this->getTextColumnNames($tableName);
         $sourceRows = $this->getSourceRows($tableName, $langIdFrom);
@@ -35,7 +35,7 @@ class TableTranslator
             $updates = $this->translateRow($row, $textColumns, $mapDestRows, $tableName, $sourceLang, $targetLang);
 
             if (empty($updates)) {
-                $this->cliStyle->writeln("No updates for row --> SKIP");
+                \Topdata\TopdataFoundationSW6\Util\CliLogger::writeln("No updates for row --> SKIP");
                 continue;
             }
 
@@ -95,7 +95,7 @@ class TableTranslator
             $existingTranslation = $mapDestRows[$row[$referenceColumnName]][$columnName] ?? null;
 
             if ($existingTranslation) {
-                $this->cliStyle->writeln("Translation already exists for $columnName [$originalText --> $existingTranslation] >>> SKIP");
+                \Topdata\TopdataFoundationSW6\Util\CliLogger::writeln("Translation already exists for $columnName [$originalText --> $existingTranslation] >>> SKIP");
                 continue;
             }
 
@@ -108,9 +108,9 @@ class TableTranslator
                         ['table' => $tableName, 'column' => $columnName]
                     );
                     $updates[$columnName] = $translatedText;
-                    $this->cliStyle->writeln("> {$originalText} [$sourceLang] --> {$translatedText} [$targetLang]");
+                    \Topdata\TopdataFoundationSW6\Util\CliLogger::writeln("> {$originalText} [$sourceLang] --> {$translatedText} [$targetLang]");
                 } catch (\Exception $e) {
-                    $this->cliStyle->error("Translation error for $columnName: " . $e->getMessage());
+                    \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->error("Translation error for $columnName: " . $e->getMessage());
                 }
             }
         }
@@ -121,18 +121,18 @@ class TableTranslator
     private function updateOrInsertTranslation(string $tableName, array $row, array $updates, string $langIdTo): void
     {
         $updates['updated_at'] = date('Y-m-d H:i:s');
-        $this->cliStyle->text("Updates: " . json_encode($updates, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->text("Updates: " . json_encode($updates, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         $crit = $this->buildUpdateRowCrit($tableName, $row, $langIdTo);
         $numUpdates = $this->connection->update($tableName, $updates, $crit);
 
         if ($numUpdates === 0) {
-            $this->cliStyle->writeln("Error updating row ... we insert instead");
+            \Topdata\TopdataFoundationSW6\Util\CliLogger::writeln("Error updating row ... we insert instead");
             $new = array_merge($crit, $updates);
             $new['created_at'] = date('Y-m-d H:i:s');
             $numInserted = $this->connection->insert($tableName, $new);
             if ($numInserted === 0) {
-                $this->cliStyle->error("Error inserting row");
+                \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->error("Error inserting row");
             }
         }
     }

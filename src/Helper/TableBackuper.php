@@ -20,7 +20,7 @@ class TableBackuper
         SymfonyStyle $cliStyle
     )
     {
-        $this->cliStyle = $cliStyle;
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle() = $cliStyle;
         $this->_parseDatabaseUrl($databaseUrl);
     }
 
@@ -29,7 +29,7 @@ class TableBackuper
     public function backupTable(string $tableName): string
     {
         $backupFile = $this->_getBackupFilename($tableName);
-        $this->cliStyle->info("Backing up table: $tableName to $backupFile");
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::info("Backing up table: $tableName to $backupFile");
 
         $command = sprintf(
             'mysqldump --hex-blob --single-transaction -h%s -u%s -p%s %s %s > %s',
@@ -41,7 +41,7 @@ class TableBackuper
             $backupFile
         );
 
-        $this->cliStyle->writeln("Executing command: $command");
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::writeln("Executing command: $command");
         exec($command);
         assert(file_exists($backupFile), 'Backup file was not created');
 
@@ -65,6 +65,6 @@ class TableBackuper
         $this->db_user = $urlParts['user'];
         $this->db_password = $urlParts['pass'];
         $this->db_name = ltrim($urlParts['path'], '/');
-        $this->cliStyle->table(['Host', 'User', 'Password', 'Database'], [[$this->db_host, $this->db_user, $this->db_password, $this->db_name]]);
+        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle()->table(['Host', 'User', 'Password', 'Database'], [[$this->db_host, $this->db_user, $this->db_password, $this->db_name]]);
     }
 }
