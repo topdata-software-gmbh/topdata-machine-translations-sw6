@@ -19,7 +19,6 @@ class TranslateCommand extends Command
 
     private Connection $connection;
     private DeeplTranslator $deeplTranslator;
-    private SymfonyStyle $cliStyle;
 
     public function __construct(Connection $connection)
     {
@@ -63,7 +62,7 @@ To:   $langCodeTo
         $availableLangs = $this->getLanguages();
         $langCodes = array_column($availableLangs, 'code');
         if (!in_array($langCodeFrom, $langCodes) || !in_array($langCodeTo, $langCodes)) {
-            CliLogger::getCliStyle()->error("Error: Invalid language codes. Available: " . implode(', ', $langCodes));
+            CliLogger::error("Error: Invalid language codes. Available: " . implode(', ', $langCodes));
             return Command::FAILURE;
         }
 
@@ -71,7 +70,7 @@ To:   $langCodeTo
         $langIdTo = $this->getLanguageId($langCodeTo);
 
         if (!$langIdFrom || !$langIdTo) {
-            CliLogger::getCliStyle()->error("Error: Could not find language IDs for the specified languages.");
+            CliLogger::error("Error: Could not find language IDs for the specified languages.");
             return Command::FAILURE;
         }
 
@@ -79,7 +78,7 @@ To:   $langCodeTo
         $tables = $this->getTablesForProcessing($specificTables);
 
         if (empty($tables)) {
-            CliLogger::getCliStyle()->error("No tables to process.");
+            CliLogger::error("No tables to process.");
             return Command::FAILURE;
         }
 

@@ -17,10 +17,8 @@ class TableBackuper
 
     public function __construct(
         string $databaseUrl,
-        SymfonyStyle $cliStyle
     )
     {
-        \Topdata\TopdataFoundationSW6\Util\CliLogger::getCliStyle() = $cliStyle;
         $this->_parseDatabaseUrl($databaseUrl);
     }
 

@@ -16,13 +16,11 @@ class TableTranslator
 
     private Connection $connection;
     private DeeplTranslator $deeplTranslator;
-    private SymfonyStyle $cliStyle;
 
-    public function __construct(Connection $connection, DeeplTranslator $deeplTranslator, SymfonyStyle $cliStyle)
+    public function __construct(Connection $connection, DeeplTranslator $deeplTranslator)
     {
         $this->connection = $connection;
         $this->deeplTranslator = $deeplTranslator;
-        CliLogger::getCliStyle() = $cliStyle;
     }
 
     public function translateTable(string $tableName, string $langIdFrom, string $langIdTo, string $sourceLang, string $targetLang): void
@@ -112,7 +110,7 @@ class TableTranslator
                     $updates[$columnName] = $translatedText;
                     CliLogger::writeln("> {$originalText} [$sourceLang] --> {$translatedText} [$targetLang]");
                 } catch (Exception $e) {
-                    CliLogger::getCliStyle()->error("Translation error for $columnName: " . $e->getMessage());
+                    CliLogger::error("Translation error for $columnName: " . $e->getMessage());
                 }
             }
         }
@@ -134,7 +132,7 @@ class TableTranslator
             $new['created_at'] = date('Y-m-d H:i:s');
             $numInserted = $this->connection->insert($tableName, $new);
             if ($numInserted === 0) {
-                CliLogger::getCliStyle()->error("Error inserting row");
+                CliLogger::error("Error inserting row");
             }
         }
     }
