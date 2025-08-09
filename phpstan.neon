@@ -1,0 +1,11 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/sascha-egerer/phpstan-shopware/extension.neon
+
+parameters:
+    level: 0
+    paths:
+        - src/
+    bootstrapFiles:
+        - ../../../../vendor/autoload.php
