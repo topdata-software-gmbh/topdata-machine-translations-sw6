@@ -1,5 +1,6 @@
 {
     "name": "topdata/machine-translations",
+   "version": "1.0.0",
     "description": "A Shopware 6 plugin for machine translation",
     "type": "shopware-platform-plugin",
     "license": "MIT",
