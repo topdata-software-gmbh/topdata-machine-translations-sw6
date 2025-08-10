@@ -1,73 +1,52 @@
 # Topdata Machine Translations Plugin for Shopware 6
 
-This plugin provides machine translation capabilities for Shopware 6, allowing automatic translation of content from German to Czech using the DeepL API.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Features
+Shopware 6 plugin providing automated machine translations using DeepL API. Designed for translating database content between languages while maintaining data integrity.
 
-- Translates content from German to Czech
-- Can translate all relevant tables or a specific table
-- Uses DeepL API for high-quality translations
-- Provides a command-line interface for easy translation management
+## Key Features
+
+- 🚀 Automated translation of database content
+- 🔐 DeepL API integration (Free and Pro plans supported)
+- ⚙️ Configurable table selection (`--table` option)
+- 💾 Automatic backup system before translation
+- 🔄 Update existing translations or insert new ones
+- 🌍 Supports all DeepL target languages
+
+## Documentation
+
+For complete documentation see the [manual directory](manual/):
+- [Installation Guide](manual/10-installation.en.md)
+- [Configuration Reference](manual/30-settings.en.md)
+- [Frequently Asked Questions](manual/40-faq.en.md)
 
 ## Requirements
 
-- Shopware 6
-- PHP 7.4 or higher
-- DeepL API key (Free or Pro)
+- Shopware 6.4+
+- PHP 8.0+
+- Valid [DeepL API Key](https://www.deepl.com/pro#developer)
+- MySQL/MariaDB database
 
-## Installation
+## Quick Start
 
-1. Clone this repository into the `custom/plugins` directory of your Shopware 6 installation:
-   ```
-   git clone https://github.com/your-repo/TopdataMachineTranslationsSW6.git custom/plugins/TopdataMachineTranslationsSW6
-   ```
-
-2. Install the plugin via the Shopware CLI:
-   ```
-   bin/console plugin:refresh
-   bin/console plugin:install --activate TopdataMachineTranslationsSW6
-   ```
-
-3. Install the required dependencies:
-   ```
-   composer require deeplcom/deepl-php
-   ```
-
-4. Clear the cache:
-   ```
-   bin/console cache:clear
-   ```
-
-## Configuration
-
-- Set your DeepL API key as an environment variable:
-   ```
-   export DEEPL_FREE_API_KEY=your-api-key-here
-   ```
-   For production use, consider adding this to your server's environment configuration.
-
-- Alternatively, you can prepend console commands with the environment variable:
-   ```
-   DEEPL_FREE_API_KEY=your-api-key-here bin/console topdata:translate
-   ```
-
-
-## Usage
-
-To translate all relevant tables:
-```
-bin/console topdata:translate
+1. Install plugin via CLI:
+```bash
+bin/console plugin:refresh
+bin/console plugin:install --activate TopdataMachineTranslationsSW6
 ```
 
-To translate one or more specific table:
+2. Set DeepL API key:
+```bash
+export DEEPL_FREE_API_KEY=your-api-key-here
 ```
-bin/console topdata:translate --table=your_table_name_a --table=your_table_name_b
+
+3. Translate all supported tables:
+```bash
+bin/console topdata:translate --from=de-DE --to=cs-CZ
 ```
 
 ## Support
-
-For support, please open an issue in the GitHub repository or contact Topdata support.
+Report issues through [GitHub Issues](https://github.com/your-repo/TopdataMachineTranslationsSW6/issues) or contact Topdata support.
 
 ## License
-
-This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](LICENSE) for details.
