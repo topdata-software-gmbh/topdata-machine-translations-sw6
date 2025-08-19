@@ -7,7 +7,7 @@
 
 
         <!-- CONSOLE COMMANDS -->
-        <service id="Topdata\TopdataMachineTranslationsSW6\Command\TranslateCommand" autowire="true">
+        <service id="Topdata\TopdataMachineTranslationsSW6\Command\TranslateDatabaseCommand" autowire="true">
             <tag name="console.command"/>
         </service>
 
