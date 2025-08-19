@@ -11,6 +11,9 @@
             "role": "Manufacturer"
         }
     ],
+    "require": {
+        "shopware/core": "6.6.*"
+    },
     "autoload": {
         "psr-4": {
             "Topdata\\TopdataMachineTranslationsSW6\\": "src/"
@@ -36,8 +39,5 @@
             "en-GB": "A Shopware 6 plugin for machine translation",
             "de-DE": "Ein Shopware 6 Plugin für maschinelle Übersetzungen"
         }
-    },
-    "require": {
-        "shopware/core": "6.4.* || 6.5.* || 6.6.*"
     }
 }

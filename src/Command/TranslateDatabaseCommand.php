@@ -13,9 +13,12 @@ use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
 use Topdata\TopdataMachineTranslationsSW6\Helper\TableBackuper;
 use Topdata\TopdataMachineTranslationsSW6\Helper\TableTranslator;
 
-class TranslateCommand extends Command
+/**
+ * 09/2024 created
+ */
+class TranslateDatabaseCommand extends Command
 {
-    protected static $defaultName = 'topdata:translate';
+    protected static $defaultName = 'topdata:machine-translations:translate-database';
 
     private Connection $connection;
     private DeeplTranslator $deeplTranslator;
