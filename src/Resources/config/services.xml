@@ -5,9 +5,12 @@
 
     <services>
 
-
         <!-- CONSOLE COMMANDS -->
-        <service id="Topdata\TopdataMachineTranslationsSW6\Command\TranslateDatabaseCommand" autowire="true">
+        <service id="Topdata\TopdataMachineTranslationsSW6\Command\Command_TranslateDatabase" autowire="true">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Topdata\TopdataMachineTranslationsSW6\Command\Command_TranslateConfigXml" autowire="true">
             <tag name="console.command"/>
         </service>
 

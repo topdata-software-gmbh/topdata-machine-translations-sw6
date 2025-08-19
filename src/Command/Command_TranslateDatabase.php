@@ -3,11 +3,13 @@
 namespace Topdata\TopdataMachineTranslationsSW6\Command;
 
 use Doctrine\DBAL\Connection;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Topdata\TopdataFoundationSW6\Command\AbstractTopdataCommand;
 use Topdata\TopdataFoundationSW6\Util\CliLogger;
 use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
 use Topdata\TopdataMachineTranslationsSW6\Helper\TableBackuper;
@@ -16,17 +18,20 @@ use Topdata\TopdataMachineTranslationsSW6\Helper\TableTranslator;
 /**
  * 09/2024 created
  */
-class TranslateDatabaseCommand extends Command
+#[AsCommand(
+    name: 'topdata:machine-translations:translate-database',
+    description: 'Translate content from one language to another'
+)]
+class Command_TranslateDatabase extends  AbstractTopdataCommand
 {
-    protected static $defaultName = 'topdata:machine-translations:translate-database';
 
-    private Connection $connection;
     private DeeplTranslator $deeplTranslator;
 
-    public function __construct(Connection $connection)
+    public function __construct(
+        private readonly Connection $connection,
+    )
     {
-        parent::__construct(self::$defaultName);
-        $this->connection = $connection;
+        parent::__construct();
     }
 
     protected function configure(): void
@@ -41,6 +46,7 @@ class TranslateDatabaseCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // ---- init
+        CliLogger::setCliStyle($this->cliStyle);
         assert(getenv('DEEPL_FREE_API_KEY'), 'DEEPL_FREE_API_KEY is missing');
         $this->deeplTranslator = new DeeplTranslator(getenv('DEEPL_FREE_API_KEY'));
         $databaseUrl = $this->connection->getParams()['url'];
@@ -86,12 +92,12 @@ To:   $langCodeTo
         }
 
         CliLogger::section('Processing Tables');
-        $tableBackuper = new TableBackuper($databaseUrl, CliLogger::getCliStyle());
-        $tableTranslator = new TableTranslator($this->connection, $this->deeplTranslator, CliLogger::getCliStyle());
+        $tableBackuper = new TableBackuper($databaseUrl);
+        $tableTranslator = new TableTranslator($this->connection, $this->deeplTranslator);
 
         foreach ($tables as $tableName) {
-            if($input->getOption('no-backup')) {
-               CliLogger::info("Skipping backup for table: $tableName");
+            if ($input->getOption('no-backup')) {
+                CliLogger::info("Skipping backup for table: $tableName");
             } else {
                 $tableBackuper->backupTable($tableName);
             }

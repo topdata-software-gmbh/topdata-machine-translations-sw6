@@ -18,6 +18,7 @@ Shopware 6 plugin providing automated machine translations using DeepL API. Desi
 For complete documentation see the [manual directory](manual/):
 - [Installation Guide](manual/10-installation.en.md)
 - [Configuration Reference](manual/30-settings.en.md)
+- [Config XML Translation](manual/35-config-translation.en.md)
 - [Frequently Asked Questions](manual/40-faq.en.md)
 
 ## Requirements

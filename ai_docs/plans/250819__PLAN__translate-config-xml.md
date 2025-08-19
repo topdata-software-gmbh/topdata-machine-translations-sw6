@@ -23,8 +23,8 @@ This workflow is robust because it's explicit. It avoids guesswork about the sou
 
 The goal of this phase is to refactor the existing command to use modern Symfony practices. This sets a consistent standard for the new command.
 
-1.  **Update `TranslateDatabaseCommand.php` to use `#[AsCommand]` attribute:**
-    *   Open `src/Command/TranslateDatabaseCommand.php`.
+1.  **Update `Command_TranslateDatabase.php` to use `#[AsCommand]` attribute:**
+    *   Open `src/Command/Command_TranslateDatabase.php`.
     *   Add the `use Symfony\Component\Console\Attribute\AsCommand;` statement.
     *   Add the attribute `#[AsCommand(name: 'topdata:machine-translations:translate-database', description: 'Translate content from one language to another')]` directly above the class definition.
     *   Remove the `protected static $defaultName` property.
