@@ -8,7 +8,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Topdata\TopdataFoundationSW6\Command\AbstractTopdataCommand;
 use Topdata\TopdataFoundationSW6\Util\CliLogger;
 use Topdata\TopdataMachineTranslationsSW6\Helper\DeeplTranslator;
@@ -49,7 +48,9 @@ class Command_TranslateDatabase extends  AbstractTopdataCommand
         CliLogger::setCliStyle($this->cliStyle);
         assert(getenv('DEEPL_FREE_API_KEY'), 'DEEPL_FREE_API_KEY is missing');
         $this->deeplTranslator = new DeeplTranslator(getenv('DEEPL_FREE_API_KEY'));
-        $databaseUrl = $this->connection->getParams()['url'];
+        $connectionParams = $this->connection->getParams();
+        $databaseUrl = $connectionParams['url'] ?? $this->buildDatabaseUrlFromParams($connectionParams);
+        $databaseLabel = $this->buildDatabaseLabel($connectionParams, $databaseUrl);
 
         CliLogger::title('Machine Translation Command');
 
@@ -62,7 +63,7 @@ class Command_TranslateDatabase extends  AbstractTopdataCommand
 
         CliLogger::section('Selected Languages');
         CliLogger::writeln("
-DB:   $databaseUrl
+DB:   $databaseLabel
 From: $langCodeFrom
 To:   $langCodeTo
         ");
@@ -125,7 +126,7 @@ To:   $langCodeTo
             ->where('LOWER(loc.code) = LOWER(:locale)')
             ->setParameter('locale', $localeCode);
 
-        return $qb->execute()->fetchOne() ?? null;
+        return $qb->executeQuery()->fetchOne() ?? null;
     }
 
     private function getLanguages(): array
@@ -135,7 +136,7 @@ To:   $langCodeTo
             ->from('language', 'lan')
             ->innerJoin('lan', 'locale', 'loc', 'lan.locale_id = loc.id');
 
-        return $qb->execute()->fetchAllAssociative();
+        return $qb->executeQuery()->fetchAllAssociative();
     }
 
     private function getTablesForProcessing(array $specificTables): array
@@ -161,9 +162,36 @@ To:   $langCodeTo
 
     private function getTranslatableTables(): array
     {
-        $tables = $this->connection->getSchemaManager()->listTableNames();
+        $schemaManager = method_exists($this->connection, 'createSchemaManager')
+            ? $this->connection->createSchemaManager()
+            : $this->connection->getSchemaManager();
+
+        $tables = $schemaManager->listTableNames();
         return array_filter($tables, function ($tableName) {
             return substr($tableName, -strlen('_translation')) === '_translation';
         });
+    }
+
+    private function buildDatabaseUrlFromParams(array $params): string
+    {
+        $user = rawurlencode((string)($params['user'] ?? ''));
+        $password = rawurlencode((string)($params['password'] ?? ''));
+        $host = (string)($params['host'] ?? 'localhost');
+        $port = isset($params['port']) ? ':' . $params['port'] : '';
+        $dbName = ltrim((string)($params['dbname'] ?? ''), '/');
+
+        return sprintf('mysql://%s:%s@%s%s/%s', $user, $password, $host, $port, $dbName);
+    }
+
+    private function buildDatabaseLabel(array $params, string $fallbackUrl): string
+    {
+        $host = $params['host'] ?? null;
+        $dbName = $params['dbname'] ?? null;
+
+        if ($host && $dbName) {
+            return sprintf('%s/%s', $host, $dbName);
+        }
+
+        return $fallbackUrl;
     }
 }

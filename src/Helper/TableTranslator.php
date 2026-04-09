@@ -45,7 +45,11 @@ class TableTranslator
 
     private function getTextColumnNames(string $tableName): array
     {
-        $columns = $this->connection->getSchemaManager()->listTableColumns($tableName);
+        $schemaManager = method_exists($this->connection, 'createSchemaManager')
+            ? $this->connection->createSchemaManager()
+            : $this->connection->getSchemaManager();
+
+        $columns = $schemaManager->listTableColumns($tableName);
         return array_filter($columns, function ($column) {
             return $column->getType()->getName() === 'string'
                 && !in_array($column->getName(), ['id'])
@@ -61,7 +65,7 @@ class TableTranslator
             ->from($tableName)
             ->where('language_id = :languageId')
             ->setParameter('languageId', $langIdFrom)
-            ->execute()
+            ->executeQuery()
             ->fetchAllAssociative();
     }
 
@@ -72,7 +76,7 @@ class TableTranslator
             ->from($tableName)
             ->where('language_id = :languageId')
             ->setParameter('languageId', $langIdTo)
-            ->execute()
+            ->executeQuery()
             ->fetchAllAssociative();
 
         $mapDestRows = [];
