@@ -5,8 +5,11 @@ namespace Topdata\TopdataMachineTranslationsSW6\Helper;
 use Topdata\TopdataFoundationSW6\Util\CliLogger;
 
 /**
- * 09/2024 created
- * 11/2025 updated to header-based authentication and exponential backoff
+ * Handles translation using the DeepL API with built-in retry logic for rate limits.
+ * Implements exponential backoff strategy when encountering HTTP 429 (rate limit) errors.
+ * 
+ * @since 09/2024
+ * @updated 11/2025 to header-based authentication and exponential backoff
  */
 class DeeplTranslator
 {
@@ -24,7 +27,14 @@ class DeeplTranslator
     }
 
     /**
-     * Translates text with built-in retry logic for rate limits (HTTP 429)
+     * Translates text using the DeepL API with built-in retry logic for rate limits (HTTP 429).
+     * Implements exponential backoff strategy when encountering rate limit errors.
+     *
+     * @param string $text The text to translate
+     * @param string $sourceLang The source language code
+     * @param string $targetLang The target language code
+     * @param mixed $meta Optional metadata for the translation request
+     * @return string The translated text
      */
     public function translate(string $text, string $sourceLang, string $targetLang, $meta = null): string
     {
@@ -56,7 +66,7 @@ class DeeplTranslator
             $curlError = curl_errno($ch) ? curl_error($ch) : null;
             curl_close($ch);
 
-            // 1. Handle Connection Errors (Network issues)
+            // ---- Connection Errors (Network issues)
             if ($curlError) {
                 if ($attempt < $this->maxRetries) {
                     $this->logRetry($attempt, $delay, "Network error: $curlError");
@@ -68,7 +78,7 @@ class DeeplTranslator
                 throw new \Exception('cURL error: ' . $curlError);
             }
 
-            // 2. Handle Success
+            // ---- Success
             if ($httpCode === 200) {
                 $result = json_decode($response, true);
                 if (isset($result['translations'][0]['text'])) {
@@ -76,7 +86,7 @@ class DeeplTranslator
                 }
             }
 
-            // 3. Handle Rate Limiting (HTTP 429)
+            // ---- Rate Limiting (HTTP 429)
             if ($httpCode === 429) {
                 if ($attempt < $this->maxRetries) {
                     $this->logRetry($attempt, $delay, "Rate limit reached (429)");
@@ -87,7 +97,7 @@ class DeeplTranslator
                 }
             }
 
-            // 4. Handle Final Failure (Other HTTP codes or exhausted retries)
+            // ---- Final Failure (Other HTTP codes or exhausted retries)
             $result = json_decode($response, true);
             $errorMessage = $result['message'] ?? $response;
             throw new \Exception("Translation failed (HTTP $httpCode): " . $errorMessage);
@@ -97,7 +107,12 @@ class DeeplTranslator
     }
 
     /**
-     * Log retry attempt to console if possible
+     * Logs a retry attempt to the console or error log if CliLogger is not available.
+     *
+     * @param int $attempt The current attempt number (0-based)
+     * @param int $delay The delay in seconds before the next attempt
+     * @param string $reason The reason for the retry
+     * @return void
      */
     private function logRetry(int $attempt, int $delay, string $reason): void
     {
@@ -113,7 +128,10 @@ class DeeplTranslator
     }
 
     /**
-     * Helper to wait/sleep
+     * Pauses execution for the specified number of seconds.
+     *
+     * @param int $seconds The number of seconds to wait
+     * @return void
      */
     private function wait(int $seconds): void
     {
