@@ -17,7 +17,7 @@ The plugin currently supports translating database content and configuration XML
 The required outcome is a new command that can translate snippet JSON files for one specific plugin or for multiple/all plugins in the Shopware custom plugin directory, while preserving existing snippet structure and avoiding unnecessary overwrites.
 
 ## 2) Executive Summary
-
+;
 This plan introduces a new console command, `topdata:machine-translations:translate-snippets-json`, that scans plugin snippet files, extracts translatable strings from a source locale file, and writes translated JSON files for one or more target locales using DeepL.
 
 The implementation is split into focused services to follow SOLID principles:

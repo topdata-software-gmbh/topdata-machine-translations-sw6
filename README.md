@@ -12,6 +12,7 @@ Shopware 6 plugin providing automated machine translations using DeepL API. Desi
 - 💾 Automatic backup system before translation
 - 🔄 Update existing translations or insert new ones
 - 🌍 Supports all DeepL target languages
+- 🧩 Translate plugin snippet JSON files (`src/Resources/snippet/*.json`)
 
 ## Documentation
 
@@ -19,6 +20,7 @@ For complete documentation see the [manual directory](manual/):
 - [Installation Guide](manual/10-installation.en.md)
 - [Configuration Reference](manual/30-settings.en.md)
 - [Config XML Translation](manual/35-config-translation.en.md)
+- [Snippet JSON Translation](manual/36-snippet-translation.en.md)
 - [Frequently Asked Questions](manual/40-faq.en.md)
 
 ## Requirements
@@ -44,6 +46,11 @@ export DEEPL_FREE_API_KEY=your-api-key-here
 3. Translate all supported tables:
 ```bash
 bin/console topdata:translate --from=de-DE --to=cs-CZ
+```
+
+4. Translate snippet JSON files for one plugin:
+```bash
+bin/console topdata:machine-translations:translate-snippets-json --plugin=SwagBasicExample --from=de-DE --to=en-GB
 ```
 
 ## Support

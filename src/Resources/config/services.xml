@@ -14,5 +14,13 @@
             <tag name="console.command"/>
         </service>
 
+        <service id="Topdata\TopdataMachineTranslationsSW6\Command\Command_TranslateSnippetsJson" autowire="true">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Topdata\TopdataMachineTranslationsSW6\Service\SnippetPluginDiscovery" autowire="true"/>
+        <service id="Topdata\TopdataMachineTranslationsSW6\Service\SnippetTranslationProcessor" autowire="true"/>
+        <service id="Topdata\TopdataMachineTranslationsSW6\Service\SnippetJsonPersister" autowire="true"/>
+
     </services>
 </container>
