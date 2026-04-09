@@ -8,6 +8,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Topdata\TopdataFoundationSW6\Util\CliLogger;
 
 /**
+ * Handles translation of database table content between languages.
+ * This class identifies text columns in tables, translates content using DeepL,
+ * and updates or inserts translated records in the target language table.
+ *
  * 09/2024 created
  */
 class TableTranslator
@@ -23,6 +27,15 @@ class TableTranslator
         $this->deeplTranslator = $deeplTranslator;
     }
 
+    /**
+     * Translates all content in a table from source language to target language.
+     * 
+     * @param string $tableName The name of the table to translate
+     * @param string $langIdFrom The source language ID
+     * @param string $langIdTo The target language ID
+     * @param string $sourceLang The source language code (e.g., 'en')
+     * @param string $targetLang The target language code (e.g., 'de')
+     */
     public function translateTable(string $tableName, string $langIdFrom, string $langIdTo, string $sourceLang, string $targetLang): void
     {
         CliLogger::info("Processing table: $tableName");
@@ -31,6 +44,7 @@ class TableTranslator
         $sourceRows = $this->getSourceRows($tableName, $langIdFrom);
         $mapDestRows = $this->getDestinationRows($tableName, $langIdTo);
 
+        // ---- Process each source row for translation
         foreach ($sourceRows as $row) {
             $updates = $this->translateRow($row, $textColumns, $mapDestRows, $tableName, $sourceLang, $targetLang);
 
@@ -43,6 +57,12 @@ class TableTranslator
         }
     }
 
+    /**
+     * Identifies and returns all text columns in a table that should be translated.
+     * 
+     * @param string $tableName The name of the table to analyze
+     * @return array Array of text columns to translate
+     */
     private function getTextColumnNames(string $tableName): array
     {
         $schemaManager = method_exists($this->connection, 'createSchemaManager')
@@ -58,6 +78,13 @@ class TableTranslator
         });
     }
 
+    /**
+     * Retrieves all rows from the source language table.
+     * 
+     * @param string $tableName The name of the table to query
+     * @param string $langIdFrom The source language ID
+     * @return array Array of source language rows
+     */
     private function getSourceRows(string $tableName, string $langIdFrom): array
     {
         return $this->connection->createQueryBuilder()
@@ -69,6 +96,13 @@ class TableTranslator
             ->fetchAllAssociative();
     }
 
+    /**
+     * Retrieves all rows from the target language table and maps them by reference column.
+     * 
+     * @param string $tableName The name of the table to query
+     * @param string $langIdTo The target language ID
+     * @return array Array of target language rows mapped by reference column
+     */
     private function getDestinationRows(string $tableName, string $langIdTo): array
     {
         $destRows = $this->connection->createQueryBuilder()
@@ -88,11 +122,23 @@ class TableTranslator
         return $mapDestRows;
     }
 
+    /**
+     * Translates a single row from source to target language.
+     * 
+     * @param array $row The source row to translate
+     * @param array $textColumns Array of text columns to translate
+     * @param array $mapDestRows Map of existing destination rows
+     * @param string $tableName The name of the table
+     * @param string $sourceLang The source language code
+     * @param string $targetLang The target language code
+     * @return array Array of translated column values
+     */
     private function translateRow(array $row, array $textColumns, array $mapDestRows, string $tableName, string $sourceLang, string $targetLang): array
     {
         $updates = [];
         $referenceColumnName = $this->getParentTableReferenceColumnName($tableName);
 
+        // ---- Translate each text column
         foreach ($textColumns as $column) {
             $columnName = $column->getName();
             $originalText = $row[$columnName];
@@ -122,15 +168,26 @@ class TableTranslator
         return $updates;
     }
 
+    /**
+     * Updates an existing translation row or inserts a new one if it doesn't exist.
+     * 
+     * @param string $tableName The name of the table
+     * @param array $row The source row
+     * @param array $updates Array of translated column values
+     * @param string $langIdTo The target language ID
+     */
     private function updateOrInsertTranslation(string $tableName, array $row, array $updates, string $langIdTo): void
     {
         $updates['updated_at'] = date('Y-m-d H:i:s');
         CliLogger::writeln("Updates: " . json_encode($updates, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         $crit = $this->buildUpdateRowCrit($tableName, $row, $langIdTo);
+        
+        // ---- Try to update existing row
         $numUpdates = $this->connection->update($tableName, $updates, $crit);
 
         if ($numUpdates === 0) {
+            // ---- Insert new row if update failed
             CliLogger::writeln("Error updating row ... we insert instead");
             $new = array_merge($crit, $updates);
             $new['created_at'] = date('Y-m-d H:i:s');
@@ -141,12 +198,26 @@ class TableTranslator
         }
     }
 
+    /**
+     * Determines the reference column name for the parent table.
+     * 
+     * @param string $tableName The translation table name
+     * @return string The reference column name
+     */
     private function getParentTableReferenceColumnName(string $tableName): string
     {
         $parentTableName = substr($tableName, 0, -strlen(self::TABLE_SUFFIX_TRANSLATION));
         return $parentTableName . '_id';
     }
 
+    /**
+     * Builds the criteria array for updating or inserting a translation row.
+     * 
+     * @param string $tableName The name of the table
+     * @param array $row The source row
+     * @param string $langIdTo The target language ID
+     * @return array Criteria array for database operations
+     */
     private function buildUpdateRowCrit(string $tableName, array $row, string $langIdTo): array
     {
         $parent_table_id = $this->getParentTableReferenceColumnName($tableName);
