@@ -57,7 +57,12 @@ final class SnippetTranslationProcessor
                     'translated' => 0,
                     'skipped' => 0,
                     'errors' => 0,
+                    'errorDetails' => [],
                 ];
+
+                if (!isset($localeCounters['errorDetails']) || !is_array($localeCounters['errorDetails'])) {
+                    $localeCounters['errorDetails'] = [];
+                }
 
                 $targetData = $this->persister->readJsonFile($targetFile);
                 $translatedPayload = $this->translateNode(
@@ -68,7 +73,9 @@ final class SnippetTranslationProcessor
                     $this->toDeepLTargetLanguage($targetLocale),
                     $force,
                     $skipEmpty,
-                    $localeCounters
+                    $localeCounters,
+                    $snippetJob['sourceFile'],
+                    $targetFile
                 );
 
                 // ---- Write translated data if not in dry run mode
@@ -107,7 +114,10 @@ final class SnippetTranslationProcessor
         string $targetLang,
         bool $force,
         bool $skipEmpty,
-        array &$counters
+        array &$counters,
+        string $sourceFile,
+        string $targetFile,
+        array $nodePath = []
     ): mixed {
         // ---- Handle array nodes
         if (is_array($sourceNode)) {
@@ -128,7 +138,10 @@ final class SnippetTranslationProcessor
                         $targetLang,
                         $force,
                         $skipEmpty,
-                        $counters
+                        $counters,
+                        $sourceFile,
+                        $targetFile,
+                        [...$nodePath, (string)$index]
                     );
                 }
 
@@ -147,7 +160,10 @@ final class SnippetTranslationProcessor
                     $targetLang,
                     $force,
                     $skipEmpty,
-                    $counters
+                    $counters,
+                    $sourceFile,
+                    $targetFile,
+                    [...$nodePath, (string)$key]
                 );
             }
 
@@ -187,8 +203,16 @@ final class SnippetTranslationProcessor
                 $counters['translated']++;
 
                 return $translated;
-            } catch (\Throwable) {
+            } catch (\Throwable $exception) {
                 $counters['errors']++;
+                $counters['errorDetails'][] = [
+                    'sourceFile' => $sourceFile,
+                    'targetFile' => $targetFile,
+                    'nodePath' => $this->formatNodePath($nodePath),
+                    'message' => $exception->getMessage(),
+                    'sourcePreview' => $this->truncateText($sourceNode, 120),
+                ];
+
                 if (is_string($targetNode) && $targetNode !== '') {
                     return $targetNode;
                 }
@@ -203,6 +227,24 @@ final class SnippetTranslationProcessor
         }
 
         return $sourceNode;
+    }
+
+    private function formatNodePath(array $segments): string
+    {
+        if (empty($segments)) {
+            return '<root>';
+        }
+
+        return implode('.', $segments);
+    }
+
+    private function truncateText(string $text, int $maxLength): string
+    {
+        if (mb_strlen($text) <= $maxLength) {
+            return $text;
+        }
+
+        return mb_substr($text, 0, $maxLength - 3) . '...';
     }
 
     /**

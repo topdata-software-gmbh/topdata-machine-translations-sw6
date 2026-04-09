@@ -108,6 +108,8 @@ class Command_TranslateSnippetsJson extends AbstractTopdataCommand
         $processedPlugins = 0;
         $failedPlugins = 0;
         $summaryRows = [];
+        $showErrorDetails = $output->isVerbose();
+        $showAllErrorDetails = $output->isVeryVerbose();
 
         foreach ($pluginPaths as $pluginName => $pluginPath) {
             CliLogger::section(sprintf('Plugin: %s', $pluginName));
@@ -157,6 +159,44 @@ class Command_TranslateSnippetsJson extends AbstractTopdataCommand
                         $stats['skipped'],
                         $stats['errors']
                     ));
+
+                    if ($showErrorDetails && $stats['errors'] > 0 && !empty($stats['errorDetails']) && is_array($stats['errorDetails'])) {
+                        $errorDetails = $stats['errorDetails'];
+                        $totalDetails = count($errorDetails);
+                        $maxToDisplay = $showAllErrorDetails ? $totalDetails : min($totalDetails, 5);
+
+                        CliLogger::warning(sprintf(
+                            '[%s] error details (%d)%s',
+                            $targetLocale,
+                            $totalDetails,
+                            $showAllErrorDetails ? '' : ', showing first 5 (use -vv for all)'
+                        ));
+
+                        for ($i = 0; $i < $maxToDisplay; $i++) {
+                            $detail = $errorDetails[$i];
+
+                            $nodePath = (string)($detail['nodePath'] ?? '<unknown>');
+                            $message = (string)($detail['message'] ?? 'Unknown error');
+                            $sourceFile = (string)($detail['sourceFile'] ?? '<unknown>');
+                            $targetFile = (string)($detail['targetFile'] ?? '<unknown>');
+                            $sourcePreview = (string)($detail['sourcePreview'] ?? '');
+
+                            CliLogger::writeln(sprintf(
+                                '  - %s | %s',
+                                $nodePath,
+                                $message
+                            ));
+                            CliLogger::writeln(sprintf('    source=%s', $sourceFile));
+                            CliLogger::writeln(sprintf('    target=%s', $targetFile));
+                            if ($sourcePreview !== '') {
+                                CliLogger::writeln(sprintf('    text=%s', $sourcePreview));
+                            }
+                        }
+
+                        if (!$showAllErrorDetails && $totalDetails > $maxToDisplay) {
+                            CliLogger::writeln(sprintf('    ... %d more errors omitted', $totalDetails - $maxToDisplay));
+                        }
+                    }
                 }
 
                 $processedPlugins++;
