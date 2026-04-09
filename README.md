@@ -1,5 +1,9 @@
 # Topdata Machine Translations Plugin for Shopware 6
 
+
+![topata-machine-translations-sw6-logo.png](topata-machine-translations-sw6-logo.png)
+
+
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Shopware 6 plugin providing automated machine translations using DeepL API. Designed for translating database content between languages while maintaining data integrity.
