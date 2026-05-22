@@ -15,7 +15,7 @@ filename: "_ai/backlog/active/260522_1730__IMPLEMENTATION_PLAN__fix-snippet-tran
 title: "Fix Locale Mapping in Snippet Translation and Enhance Verbose Logging"
 createdAt: 2026-05-22 17:30
 updatedAt: 2026-05-22 17:30
-status: in-progress
+status: completed
 priority: medium
 tags: [translation, locale, bugfix, logging]
 estimatedComplexity: simple

@@ -178,7 +178,7 @@ final class SnippetPluginDiscovery
     {
         // ---- Normalize path for consistent matching
         $normalizedPath = str_replace('\\', '/', $path);
-        $dashLocale = $locale;
+        $dashLocale = str_replace('_', '-', $locale);
         $underscoreLocale = str_replace('-', '_', $locale);
 
         $basename = basename($normalizedPath);
@@ -213,9 +213,9 @@ final class SnippetPluginDiscovery
      */
     private function mapPathToLocale(string $path, string $fromLocale, string $toLocale): string
     {
-        $fromDash = $fromLocale;
+        $fromDash = str_replace('_', '-', $fromLocale);
         $fromUnderscore = str_replace('-', '_', $fromLocale);
-        $toDash = $toLocale;
+        $toDash = str_replace('_', '-', $toLocale);
         $toUnderscore = str_replace('-', '_', $toLocale);
 
         return str_replace(

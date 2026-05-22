@@ -64,6 +64,7 @@ bin/console topdata:machine-translations:translate-snippets-json --plugin=MyPlug
 
 - Source file: `<plugin>/src/Resources/snippet/<from>.json`
 - Target files: `<plugin>/src/Resources/snippet/<to>.json`
+- Both dash (`de-DE`) and underscore (`de_DE`) formats are supported for the `--from` and `--to` parameters. The command maps and converts them matching the filenames and directory structures accordingly.
 - Existing non-empty target values are kept by default
 - Nested JSON key structure is preserved recursively
 - Backups are created for existing target files unless `--no-backup` is set

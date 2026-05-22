@@ -48,6 +48,7 @@ final class SnippetTranslationProcessor
 
         // ---- Process each snippet job
         foreach ($snippetJobs as $snippetJob) {
+            $this->logInfo(sprintf('Reading source snippet file: %s', $snippetJob['sourceFile']));
             $sourceData = $this->persister->readJsonFile($snippetJob['sourceFile']);
 
             // ---- Process each target file for the current snippet job
@@ -64,6 +65,7 @@ final class SnippetTranslationProcessor
                     $localeCounters['errorDetails'] = [];
                 }
 
+                $this->logInfo(sprintf('Reading target snippet file: %s', $targetFile));
                 $targetData = $this->persister->readJsonFile($targetFile);
                 $translatedPayload = $this->translateNode(
                     $sourceData,
@@ -80,10 +82,17 @@ final class SnippetTranslationProcessor
 
                 // ---- Write translated data if not in dry run mode
                 if (!$dryRun) {
-                    if ($backup) {
-                        $this->persister->backupFile($targetFile);
+                    if ($backup && file_exists($targetFile)) {
+                        $backupPath = $this->persister->backupFile($targetFile);
+                        if ($backupPath) {
+                            $this->logInfo(sprintf('Created backup of target snippet file: %s', $backupPath));
+                        }
                     }
+
+                    $this->logInfo(sprintf('Writing updated target snippet file: %s', $targetFile));
                     $this->persister->writeJsonFile($targetFile, $translatedPayload);
+                } else {
+                    $this->logInfo(sprintf('[Dry-run] Would write updated target snippet file: %s', $targetFile));
                 }
 
                 $summary['locales'][$targetLocale] = $localeCounters;
@@ -267,11 +276,26 @@ final class SnippetTranslationProcessor
      */
     private function toDeepLTargetLanguage(string $locale): string
     {
-        $normalizedLocale = strtoupper($locale);
+        $normalizedLocale = str_replace('_', '-', strtoupper($locale));
         if (in_array($normalizedLocale, ['EN-GB', 'EN-US', 'PT-BR', 'PT-PT'], true)) {
             return $normalizedLocale;
         }
 
         return strtoupper(substr($normalizedLocale, 0, 2));
+    }
+
+    private function logInfo(string $message): void
+    {
+        $loggerClass = 'Topdata\\TopdataFoundationSW6\\Util\\CliLogger';
+
+        if (!class_exists($loggerClass)) {
+            return;
+        }
+
+        if (!is_callable([$loggerClass, 'info'])) {
+            return;
+        }
+
+        call_user_func([$loggerClass, 'info'], $message);
     }
 }

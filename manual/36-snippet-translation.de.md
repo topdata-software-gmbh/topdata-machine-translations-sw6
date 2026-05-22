@@ -64,6 +64,7 @@ bin/console topdata:machine-translations:translate-snippets-json --plugin=MyPlug
 
 - Quelldatei: `<plugin>/src/Resources/snippet/<from>.json`
 - Zieldateien: `<plugin>/src/Resources/snippet/<to>.json`
+- Sowohl das Bindestrich-Format (`de-DE`) als auch das Unterstrich-Format (`de_DE`) werden für die Parameter `--from` und `--to` unterstützt. Der Befehl mappt und konvertiert diese passend zu den Dateinamen und Ordnerstrukturen.
 - Bestehende, nicht-leere Zielwerte bleiben standardmäßig erhalten
 - Verschachtelte JSON-Key-Struktur wird rekursiv beibehalten
 - Für bestehende Zieldateien werden Sicherungen erstellt, außer bei `--no-backup`
